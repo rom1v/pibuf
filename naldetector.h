@@ -3,7 +3,7 @@
 
 /* NAL detector is an automaton for detecting NAL start_prefixes (0x000001) in H.264 streams. */
 
-#define START_PREFIX_SIZE 3
+#define START_PREFIX_SIZE 4
 
 struct naldetector {
   int pattern_bytes_ok;
