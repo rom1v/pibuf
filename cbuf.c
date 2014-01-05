@@ -53,26 +53,26 @@ size_t cbuf_write(struct cbuf *cbuf, char *data, size_t length) {
 size_t cbuf_print_nals(struct cbuf *cbuf, FILE * stream) {
   int tail = (cbuf->head + cbuf->capacity - cbuf->length) % cbuf->capacity;
 
-  // seek to next 0x000001 pattern
+  // seek to next start_prefix pattern
   int length; // length of data to write, after garbage skipped
   int skipped = 0;
   char b; // current byte
-  int detected = 0;
+  int detected_rewind = 0; // 0 for not detected, number of bytes to rewind if detected
   struct naldetector detector;
-  naldetector_init(&detector);
-  while (skipped < cbuf->capacity && !detected) {
+  naldetector_init(&detector, 1 /* IDR only */);
+  while (skipped < cbuf->capacity && !detected_rewind) {
     b = cbuf->data[tail];
     tail++;
     if (tail == cbuf->capacity) {
       tail = 0;
     }
     skipped++;
-    detected = naldetector_eat(&detector, b);
+    detected_rewind = naldetector_eat(&detector, b);
   }
-  if (detected) {
-    // rewind to write the 0x000001 pattern
-    tail -= START_PREFIX_SIZE;
-    skipped -= START_PREFIX_SIZE;
+  if (detected_rewind) {
+    // rewind to write the start_prefix pattern
+    tail -= detected_rewind;
+    skipped -= detected_rewind;
     if (tail < 0) {
       tail += cbuf->capacity;
     }

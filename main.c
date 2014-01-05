@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
   char *headers;
   int headers_size;
   struct naldetector detector;
+  int detected_rewind; // 0 if not detected, number of bytes to rewind if detected
   int remaining_start_prefixes;
 
   // parse commandline arguments
@@ -48,7 +49,7 @@ int main(int argc, char *argv[]) {
 
   // read headers
   // detect the i-th start prefix (0x000001), everything before is headers
-  naldetector_init(&detector);
+  naldetector_init(&detector, 0 /* detect any NAL */);
   headers_size = 0;
   remaining_start_prefixes = PAYLOAD_START_PREFIX_NUMBER;
   while (!feof(stdin) && !ferror(stdin) && remaining_start_prefixes > 0) {
@@ -56,16 +57,16 @@ int main(int argc, char *argv[]) {
       while (read > 0 && remaining_start_prefixes > 0) {
         read--;
         headers_size++;
-        if (naldetector_eat(&detector, buf[headers_size - 1])) {
+        if ((detected_rewind = naldetector_eat(&detector, buf[headers_size - 1]))) {
           if (--remaining_start_prefixes == 0) {
-            headers_size -= START_PREFIX_SIZE;
+            headers_size -= detected_rewind;
             if (!(headers = malloc(headers_size))) {
               perror("Cannot allocate headers buffer");
               exit(2);
             }
             memcpy(headers, buf, headers_size);
             // push the remaining data, including 0x000001, into the circular buffer
-            cbuf_write(&cbuf, &buf[headers_size], read + START_PREFIX_SIZE);
+            cbuf_write(&cbuf, &buf[headers_size], read + detected_rewind);
           }
         }
       }
