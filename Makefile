@@ -1,6 +1,6 @@
 OUT = pibuf
 OBJ = main.o cbuf.o
-CFLAGS = -g
+CFLAGS = -g -Wall
 
 pibuf : $(OBJ)
 	cc $(CFLAGS) -o pibuf $(OBJ)

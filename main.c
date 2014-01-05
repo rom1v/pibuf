@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     exit(2);
   }
   while (!feof(stdin) && !ferror(stdin)) {
-    if (read = fread(buf, 1, BUFSIZE, stdin)) {
+    if ((read = fread(buf, 1, BUFSIZE, stdin))) {
       cbuf_write(&cbuf, buf, read);
     }
   }
