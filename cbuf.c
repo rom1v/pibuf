@@ -55,14 +55,15 @@ size_t cbuf_print_nals(struct cbuf *cbuf, FILE * stream) {
   // seek to next 0x000001 pattern
   int length; // length of data to write, after garbage skipped
   int pattern_bytes_ok = 0;
-  int end = (tail + cbuf->length) % cbuf->capacity;
+  int skipped = 0;
   char b; // current byte
-  while (tail != end && pattern_bytes_ok < 3) {
+  while (skipped < cbuf->capacity && pattern_bytes_ok < 3) {
     b = cbuf->data[tail];
     tail++;
     if (tail == cbuf->capacity) {
       tail = 0;
     }
+    skipped++;
     if (pattern_bytes_ok == 2) {
       if (b == 0x01) {
         // found
@@ -79,11 +80,12 @@ size_t cbuf_print_nals(struct cbuf *cbuf, FILE * stream) {
   if (pattern_bytes_ok == 3) {
     // rewind to write the 0x000001 pattern
     tail -= 3;
+    skipped -= 3;
     if (tail < 0) {
       tail += cbuf->capacity;
     }
     // recompute the new length, after garbage has been skipped
-    length = (cbuf->head + cbuf->capacity - tail) % cbuf->capacity;
+    length = cbuf->length - skipped;
     if (tail + length > cbuf->capacity) {
       fwrite(&cbuf->data[tail], 1, cbuf->capacity - tail, stream);
       fwrite(cbuf->data, 1, length + tail - cbuf->capacity, stream);
