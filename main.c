@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
   struct cbuf cbuf;
   char buf[BUFSIZE];
   int read;
-  if (cbuf_init(&cbuf, 100)) {
+  if (cbuf_init(&cbuf, 10000000)) {
     fprintf(stderr, "Out of memory");
     exit(1);
   }
