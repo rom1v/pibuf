@@ -71,8 +71,8 @@ size_t cbuf_print_nals(struct cbuf *cbuf, FILE * stream) {
   }
   if (detected) {
     // rewind to write the 0x000001 pattern
-    tail -= 3;
-    skipped -= 3;
+    tail -= START_PREFIX_SIZE;
+    skipped -= START_PREFIX_SIZE;
     if (tail < 0) {
       tail += cbuf->capacity;
     }

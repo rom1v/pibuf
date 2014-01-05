@@ -5,7 +5,7 @@ void naldetector_init(struct naldetector *detector) {
 }
 
 int naldetector_eat(struct naldetector *detector, char c) {
-  if (detector->pattern_bytes_ok == 2) {
+  if (detector->pattern_bytes_ok == START_PREFIX_SIZE - 1) {
     if (c == 0x01) {
       // found, the detector will need to be init for reuse
       return 1;

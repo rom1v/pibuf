@@ -58,14 +58,14 @@ int main(int argc, char *argv[]) {
         headers_size++;
         if (naldetector_eat(&detector, buf[headers_size - 1])) {
           if (--remaining_start_prefixes == 0) {
-            headers_size -= 3;
+            headers_size -= START_PREFIX_SIZE;
             if (!(headers = malloc(headers_size))) {
               perror("Cannot allocate headers buffer");
               exit(2);
             }
             memcpy(headers, buf, headers_size);
             // push the remaining data, including 0x000001, into the circular buffer
-            cbuf_write(&cbuf, &buf[headers_size], read + 3);
+            cbuf_write(&cbuf, &buf[headers_size], read + START_PREFIX_SIZE);
           }
         }
       }
@@ -74,7 +74,6 @@ int main(int argc, char *argv[]) {
 
   if (remaining_start_prefixes == 0) {
     // the headers have been detected,
-    fprintf(stderr, "headers_size = %d\n", headers_size);
 
     // consume
     while (!feof(stdin) && !ferror(stdin)) {
