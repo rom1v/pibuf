@@ -1,6 +1,7 @@
 #include <malloc.h>
 #include <string.h>
 #include "cbuf.h"
+#include "naldetector.h"
 
 int cbuf_init(struct cbuf *cbuf, size_t capacity) {
   cbuf->data = (char *) malloc(capacity);
@@ -54,30 +55,21 @@ size_t cbuf_print_nals(struct cbuf *cbuf, FILE * stream) {
 
   // seek to next 0x000001 pattern
   int length; // length of data to write, after garbage skipped
-  int pattern_bytes_ok = 0;
   int skipped = 0;
   char b; // current byte
-  while (skipped < cbuf->capacity && pattern_bytes_ok < 3) {
+  int detected = 0;
+  struct naldetector detector;
+  naldetector_init(&detector);
+  while (skipped < cbuf->capacity && !detected) {
     b = cbuf->data[tail];
     tail++;
     if (tail == cbuf->capacity) {
       tail = 0;
     }
     skipped++;
-    if (pattern_bytes_ok == 2) {
-      if (b == 0x01) {
-        // found
-        pattern_bytes_ok = 3;
-      } else if (b != 0x00) {
-        pattern_bytes_ok = 0;
-      }
-    } else if (b == 0x00) {
-      pattern_bytes_ok++;
-    } else {
-      pattern_bytes_ok = 0;
-    }
+    detected = naldetector_eat(&detector, b);
   }
-  if (pattern_bytes_ok == 3) {
+  if (detected) {
     // rewind to write the 0x000001 pattern
     tail -= 3;
     skipped -= 3;
