@@ -56,7 +56,8 @@ do
   case "$action" in
   r) stop_current; cur=r; record_start;;
   p) stop_current; cur=p; play_start;;
-  q) stop_current; exit 0;;
+  # 0x1b is the escape key
+  $'\x1b') stop_current; exit 0;;
   esac
   read -sn1 action
 done
