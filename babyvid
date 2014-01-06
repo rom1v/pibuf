@@ -5,7 +5,7 @@ record_start() {
   mkfifo /tmp/fifo
 
   # record
-  raspivid -w 1280 -h 720 -t 0 -fps 24 -g 24 -vf -hf -n -o - |
+  raspivid -w 1280 -h 720 -t 0 -fps 25 -g 25 -vf -hf -n -o - |
     # duplicate the stream to stdout AND to the defined subshell, which bufferize to a fifo
     tee >(mbuffer -m 30m > /tmp/fifo) |
     # keep the last n bytes, and cut on a NAL IDR (keyframe) to a file
