@@ -22,7 +22,7 @@ record_start() {
 }
 
 record_stop() {
-  kill $omxplayer_pid
+  #kill $omxplayer_pid
   kill $raspivid_pid
   wait $pibuf_pid # wait for pibuf to write the record
 }
@@ -35,7 +35,8 @@ play_start() {
 }
 
 play_stop() {
-  kill $omxplayer_pid
+  :
+  #kill $omxplayer_pid
 }
 
 stop_current() {
