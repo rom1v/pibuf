@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# for omxplayer.bin
+export LD_LIBRARY_PATH="/opt/vc/lib:/usr/lib/omxplayer"
+
 record_start() {
   rm -f /tmp/fifo
   mkfifo /tmp/fifo
@@ -16,27 +19,26 @@ record_start() {
   raspivid_pid=$(jobs -p)
 
   # live-stream with a short delay (useful for quick replays)
-  omxplayer --video_queue 1 /tmp/fifo &
+  omxplayer.bin --video_queue 1 /tmp/fifo &
   # get the omxplayer PID
   omxplayer_pid=$!
 }
 
 record_stop() {
-  #kill $omxplayer_pid
+  kill $omxplayer_pid
   kill $raspivid_pid
   wait $pibuf_pid # wait for pibuf to write the record
 }
 
 play_start() {
   # play the record
-  omxplayer /tmp/record.h264 &
+  omxplayer.bin /tmp/record.h264 &
   #get the omxplayer PID
   omxplayer_pid=$!
 }
 
 play_stop() {
-  :
-  #kill $omxplayer_pid
+  kill $omxplayer_pid
 }
 
 stop_current() {
