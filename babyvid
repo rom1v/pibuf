@@ -1,35 +1,61 @@
 #!/bin/bash
-rm -f /tmp/fifo
-mkfifo /tmp/fifo
 
-# record
-raspivid -w 1280 -h 720 -t 0 -fps 24 -g 24 -vf -hf -n -o - |
-  # duplicate the stream to stdout AND to the defined subshell, which bufferize to a fifo
-  tee >(mbuffer -m 30m > /tmp/fifo) |
-  # keep the last n bytes, and cut on a NAL IDR (keyframe) to a file
-  pibuf 30m > /tmp/record.h264 &
-# get the pibuf PID
-pibuf_pid=$!
-# get the raspivid PID
-raspivid_pid=$(jobs -p)
+record_start() {
+  rm -f /tmp/fifo
+  mkfifo /tmp/fifo
 
-# live-stream with a short delay (useful for quick replays)
-omxplayer --video_queue 1 /tmp/fifo &
-# get the omxplayer PID
-omxplayer_pid=$!
+  # record
+  raspivid -w 1280 -h 720 -t 0 -fps 24 -g 24 -vf -hf -n -o - |
+    # duplicate the stream to stdout AND to the defined subshell, which bufferize to a fifo
+    tee >(mbuffer -m 30m > /tmp/fifo) |
+    # keep the last n bytes, and cut on a NAL IDR (keyframe) to a file
+    pibuf 30m > /tmp/record.h264 &
+  # get the pibuf PID
+  pibuf_pid=$!
+  # get the raspivid PID
+  raspivid_pid=$(jobs -p)
 
-# wait for "return" pressed
-read dummy
+  # live-stream with a short delay (useful for quick replays)
+  omxplayer --video_queue 1 /tmp/fifo &
+  # get the omxplayer PID
+  omxplayer_pid=$!
+}
 
-kill $omxplayer_pid
-kill $raspivid_pid
+record_stop() {
+  kill $omxplayer_pid
+  kill $raspivid_pid
+  wait $pibuf_pid # wait for pibuf to write the record
+}
 
-wait $pibuf_pid # wait for pibuf to write the record
+play_start() {
+  # play the record
+  omxplayer /tmp/record.h264 &
+  #get the omxplayer PID
+  omxplayer_pid=$!
+}
 
-# play the record
-omxplayer /tmp/record.h264
+play_stop() {
+  kill $omxplayer_pid
+}
 
-# TODO
-# use "read -n 1" for capturing 1 key with pressing return
-# make the replay replayable again at any time
-# make possible to record again after the replay
+stop_current() {
+  case "$cur" in
+  r) record_stop;;
+  p) play_stop;;
+  esac
+}
+
+unset cur
+unset raspivid_pid
+unset pibuf_pid
+unset omxplayer_pid
+action=r #record
+until [ "$action" = q ]
+do
+  case "$action" in
+  r) stop_current; cur=r; record_start;;
+  p) stop_current; cur=p; play_start;;
+  q) stop_current; exit 0;;
+  esac
+  read -sn1 action
+done
