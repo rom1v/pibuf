@@ -31,11 +31,14 @@ int main(int argc, char *argv[]) {
       perror("Cannot parse cbufsize argument");
       exit(1);
     }
-    if (garbage[0] != '\0') {
+    if (strcmp("k", garbage) == 0) {
+      cbufsize *= 1024; // Kb
+    } else if (strcmp("m", garbage) == 0) {
+      cbufsize *= 1024 * 1024; // Mb
+    } else if (garbage[0] != '\0') {
       fprintf(stderr, "cbufsize contains garbage: %s\n", garbage);
       exit(1);
     }
-    cbufsize *= 1024; // convert from kb
   } else {
     fprintf(stderr, "Syntax: %s [cbufsize in kb]\n", argv[0]);
     exit(1);
